@@ -52,6 +52,39 @@ local servers = {
 }
 
 require("lazy").setup({
+    -- Tema con colores vivos para que tipos / funciones / variables se distingan.
+    {
+        "folke/tokyonight.nvim",
+        lazy = false,
+        priority = 1000,
+        config = function()
+            require("tokyonight").setup({
+                style = "storm",
+                terminal_colors = true,
+            })
+            vim.cmd.colorscheme("tokyonight")
+        end,
+    },
+
+    -- Cada nivel de {}, () y [] con un color distinto.
+    {
+        "HiPhish/rainbow-delimiters.nvim",
+        dependencies = { "nvim-treesitter/nvim-treesitter" },
+        config = function()
+            require("rainbow-delimiters.setup").setup({
+                highlight = {
+                    "RainbowDelimiterRed",
+                    "RainbowDelimiterYellow",
+                    "RainbowDelimiterBlue",
+                    "RainbowDelimiterOrange",
+                    "RainbowDelimiterGreen",
+                    "RainbowDelimiterViolet",
+                    "RainbowDelimiterCyan",
+                },
+            })
+        end,
+    },
+
     {
         -- Rama estable: compila los parsers con gcc/clang y no depende de
         -- `tree-sitter build` (la rama `main` falla con CLI >= 0.25:
@@ -278,6 +311,43 @@ require("lazy").setup({
             vim.keymap.set("n", "<leader>b", dap.toggle_breakpoint, { desc = "Toggle breakpoint" })
         end,
     },
+})
+
+-- Colores semánticos bien diferenciados para C:
+-- funciones = azul, tipos = cyan, variables/parámetros = naranja,
+-- macros/preproc = magenta, strings/numbers/keywords cada uno el suyo.
+-- Se reaplica al cambiar de colorscheme.
+local function apply_c_highlights()
+    -- Treesitter
+    vim.api.nvim_set_hl(0, "@function", { fg = "#7aa2f7", bold = true })
+    vim.api.nvim_set_hl(0, "@function.call", { fg = "#7aa2f7", bold = true })
+    vim.api.nvim_set_hl(0, "@method", { fg = "#7aa2f7" })
+    vim.api.nvim_set_hl(0, "@method.call", { fg = "#7aa2f7" })
+    vim.api.nvim_set_hl(0, "@type", { fg = "#7dcfff", italic = true })
+    vim.api.nvim_set_hl(0, "@type.builtin", { fg = "#7dcfff", italic = true, bold = true })
+    vim.api.nvim_set_hl(0, "@variable", { fg = "#e0af68" })
+    vim.api.nvim_set_hl(0, "@variable.parameter", { fg = "#ff9e64", italic = true })
+    vim.api.nvim_set_hl(0, "@constant", { fg = "#ff9e64", bold = true })
+    vim.api.nvim_set_hl(0, "@constant.builtin", { fg = "#ff9e64", bold = true })
+    vim.api.nvim_set_hl(0, "@property", { fg = "#73daca" })
+    vim.api.nvim_set_hl(0, "@number", { fg = "#ff9e64" })
+    vim.api.nvim_set_hl(0, "@string", { fg = "#9ece6a" })
+    vim.api.nvim_set_hl(0, "@keyword", { fg = "#bb9af7", italic = true })
+    vim.api.nvim_set_hl(0, "@preproc", { fg = "#bb9af7" })
+    vim.api.nvim_set_hl(0, "@define", { fg = "#bb9af7", bold = true })
+    vim.api.nvim_set_hl(0, "@include", { fg = "#bb9af7" })
+    -- Tokens semánticos del LSP (clangd)
+    vim.api.nvim_set_hl(0, "@lsp.type.function", { fg = "#7aa2f7", bold = true })
+    vim.api.nvim_set_hl(0, "@lsp.type.method", { fg = "#7aa2f7" })
+    vim.api.nvim_set_hl(0, "@lsp.type.type", { fg = "#7dcfff", italic = true })
+    vim.api.nvim_set_hl(0, "@lsp.type.class", { fg = "#7dcfff" })
+    vim.api.nvim_set_hl(0, "@lsp.type.variable", { fg = "#e0af68" })
+    vim.api.nvim_set_hl(0, "@lsp.type.parameter", { fg = "#ff9e64", italic = true })
+    vim.api.nvim_set_hl(0, "@lsp.type.macro", { fg = "#bb9af7", bold = true })
+end
+apply_c_highlights()
+vim.api.nvim_create_autocmd("ColorScheme", {
+    callback = apply_c_highlights,
 })
 
 vim.diagnostic.config({
