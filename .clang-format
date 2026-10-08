@@ -21,10 +21,10 @@ AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 SortIncludes: CaseSensitive
 ReflowComments: true
-TrimTrailingWhitespace: true
+#TrimTrailingWhitespace: true
 DerivePointerAlignment: false
 IncludeBlocks: Preserve
-KeepEmptyLinesAtStartOfBlock: false
+#KeepEmptyLinesAtStartOfBlock: false
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 FixNamespaceComments: true
