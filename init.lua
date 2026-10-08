@@ -53,23 +53,28 @@ local servers = {
 
 require("lazy").setup({
     {
+        -- Rama estable: compila los parsers con gcc/clang y no depende de
+        -- `tree-sitter build` (la rama `main` falla con CLI >= 0.25:
+        -- "The subcommand 'build' wasn't recognized").
         "nvim-treesitter/nvim-treesitter",
-        branch = "main",
+        branch = "master",
         lazy = false,
+        build = ":TSUpdate",
         config = function()
-            local parser_names = {
-                "bash", "c", "cmake", "cpp", "css", "dockerfile", "html",
-                "javascript", "json", "lua", "make", "markdown",
-                "markdown_inline", "python", "query", "regex", "rust", "scss",
-                "toml", "tsx", "typescript", "vim", "vimdoc", "yaml",
-            }
-
-            require("nvim-treesitter").install(parser_names)
-            vim.api.nvim_create_autocmd("FileType", {
-                callback = function(args)
-                    -- A missing parser should not prevent editing that file.
-                    pcall(vim.treesitter.start, args.buf)
-                end,
+            require("nvim-treesitter.configs").setup({
+                ensure_installed = {
+                    "bash", "c", "cmake", "cpp", "css", "dockerfile", "html",
+                    "javascript", "json", "lua", "make", "markdown",
+                    "markdown_inline", "python", "rust", "scss",
+                    "toml", "tsx", "typescript", "vim", "vimdoc", "yaml",
+                },
+                sync_install = false,
+                auto_install = true,
+                highlight = {
+                    enable = true,
+                    additional_vim_regex_highlighting = false,
+                },
+                indent = { enable = true },
             })
         end,
     },

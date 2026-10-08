@@ -60,6 +60,16 @@ if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
     "${SUDO[@]}" ln -sf "$(command -v fdfind)" /usr/local/bin/fd
 fi
 
+# La rama estable de nvim-treesitter (master) compila los parsers con
+# gcc/clang y NO necesita el CLI `tree-sitter`. Las versiones recientes del
+# CLI (>= 0.25, la que instala apt) eliminaron el subcomando `build` y
+# provocan: "The subcommand 'build' wasn't recognized".
+# Si quedó instalado de una ejecución anterior, lo eliminamos.
+if command -v tree-sitter >/dev/null 2>&1 || dpkg -l 2>/dev/null | grep -q tree-sitter-cli; then
+    echo "Eliminando tree-sitter-cli incompatible (no necesario con master)..."
+    "${SUDO[@]}" apt-get remove -y tree-sitter-cli || true
+fi
+
 echo
 echo "[2/5] Instalando Neovim estable más reciente..."
 case "$(uname -m)" in
@@ -108,6 +118,7 @@ fi
 echo
 echo "[5/5] Instalando plugins de Neovim..."
 nvim --headless "+Lazy! sync" +qa
+nvim --headless "+TSUpdateSync" +qa || true
 nvim --headless "+MasonToolsInstallSync" +qa
 
 echo
