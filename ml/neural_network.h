@@ -9,7 +9,7 @@ typedef struct layer {
 
 typedef struct neural_network {
     int n_layers;
-    layer** layers;
+    layer* layers[MAX_N_LAYERS];
 } neural_network;
 
 layer* nn_create_layer();
@@ -19,6 +19,7 @@ int nn_add_layer_to_neural_network(neural_network *nn, layer *l);
 int nn_train_neural_network(neural_network *nn);
 int nn_train_predict(neural_network *nn);
 
-
+void nn_free_layer(layer *l);
+void nn_free_neural_network(neural_network *nn);
 
 #endif

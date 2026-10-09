@@ -15,7 +15,7 @@ int main() {
         &test_labels
     );
 
-    for (int i = 0; i < 0; i++) {
+    for (int i = 0; i < 1; i++) {
         mnist_display_image(train_images->data + i * IMAGE_SIZE * IMAGE_SIZE);
 
         for (int j = 0; j < 10; j++) {
@@ -41,6 +41,13 @@ int main() {
         perror("Error training \n");
         return 1;
     }
+    nn_free_layer(l);
+    nn_free_neural_network(nn);
+
+    mat_free(train_images);
+    mat_free(test_images);
+    mat_free(train_labels);
+    mat_free(test_labels);
 
     return 0;
 }

@@ -24,6 +24,10 @@ permission:
     "git status *": allow
     "git log *": allow
     "git diff *": allow
+
+    "gcc*": allow
+    "valgrind *": allow
+
     "*rm*": deny
     "*mv *": deny
     "*cp *": deny
@@ -34,7 +38,6 @@ permission:
     "*dd *": deny
     "*tee*": deny
     "*sudo*": deny
-    "*gcc*": deny
     "*clang*": deny
     "*make*": deny
     "*python*": deny

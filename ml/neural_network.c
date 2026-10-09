@@ -33,29 +33,37 @@ layer* nn_create_layer() {
 
     return l;
 }
+
 neural_network* nn_create_neural_network() {
     neural_network *nn = malloc(sizeof(struct neural_network));
 
     nn->n_layers = 0;
-    nn->layers = NULL;
 
     return nn;
 }
+
 int nn_add_layer_to_neural_network(neural_network *nn, layer *l) {
     if (nn->n_layers >= MAX_N_LAYERS) {
         return FALSE;
     }
-  
-    nn->layers = malloc(sizeof(nn->layers)+sizeof(struct layer));
     nn->layers[nn->n_layers++] = l;
 
     return TRUE;
 }
 
 int nn_train_neural_network(neural_network *nn) {
+    (void)(nn);
     return TRUE;
 }
 
 int nn_train_predict(neural_network *nn) {
+    (void)(nn);
     return TRUE;
+}
+
+void nn_free_layer(layer *l) {
+    if(l != NULL) free(l);
+}
+void nn_free_neural_network(neural_network *nn) {
+    if (nn != NULL) free(nn);
 }

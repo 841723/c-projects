@@ -44,7 +44,7 @@ void mnist_get_data(
             (*train_labels)->data[i * 10 + j] = 0.0f;
         }
         int num = train_labels_read->data[i];
-        (*train_labels)->data[i * 10 + num] = 1.0f;
+        if (0 <= num && num <= 9) (*train_labels)->data[i * 10 + num] = 1.0f;
     }
 
     for (int i = 0; i < (*test_images)->rows; i++) {
@@ -52,11 +52,11 @@ void mnist_get_data(
             (*test_labels)->data[i * 10 + j] = 0.0f;
         }
         int num = test_labels_read->data[i];
-        (*test_labels)->data[i * 10 + num] = 1.0f;
+        if (0 <= num && num <= 9) (*test_labels)->data[i * 10 + num] = 1.0f;
     }
 
-    free(train_labels_read);
-    free(test_labels_read);
+    mat_free(train_labels_read);
+    mat_free(test_labels_read);
 }
 
 void mnist_display_image(float *image) {
