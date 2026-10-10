@@ -37,6 +37,9 @@ void mnist_get_data(
     
     *train_images = mat_load("./dfs/train_images.mat", 60000, IMAGE_SIZE * IMAGE_SIZE);
     *test_images = mat_load("./dfs/test_images.mat", 10000, IMAGE_SIZE * IMAGE_SIZE);
+
+    if (train_labels_read == NULL || test_labels_read == NULL) return;
+    
     *train_labels = mat_create(train_labels_read->rows, 10);
     *test_labels = mat_create(test_labels_read->rows, 10);
     for (int i = 0; i < (*train_images)->rows; i++) {

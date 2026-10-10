@@ -58,12 +58,10 @@ matrix *mat_load(const char *pathname, int rows, int cols) {
         return NULL;
     }
     fseek(f, 0, SEEK_END);
-    unsigned long size = ftell(f);
+    unsigned long filesize = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    long to_read = size > rows * cols * sizeof(float) 
-        ? rows * cols * sizeof(float) 
-        : size;
+    long to_read = min(filesize, rows * cols * sizeof(float));
 
     matrix *mat = mat_create(rows, cols);
     if (mat == NULL) {
@@ -141,9 +139,15 @@ int mat_mul(matrix *res, matrix *a, matrix *b) {
 
 
 void mat_print(matrix *mat) {
-    if (mat == NULL) return FALSE;
-    for (int i = 0; i < mat->rows; i++) {
-        for (int j = 0; j < mat->cols; j++) {
+    if (mat == NULL) return;
+    
+    int max_rows = 4, max_cols = 15;
+
+    int rows = min(max_rows, mat->rows);
+    int cols = min(max_cols, mat->cols);
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
             printf("%.2f ", mat->data[i*mat->cols+j]);
         }
         printf("\n");
