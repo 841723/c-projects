@@ -7,14 +7,18 @@
 
 typedef struct layer {
     int n_cells;
+    float b;
+    matrix *w;
 } layer ;
 
 typedef struct neural_network {
-    int n_layers;
+    int n_layers, epochs;
+    float lr;
     layer* layers[MAX_N_LAYERS];
+
 } neural_network;
 
-layer* nn_create_layer();
+layer* nn_create_layer(int n_cells);
 neural_network* nn_create_neural_network();
 int nn_add_layer_to_neural_network(neural_network *nn, layer *l);
 

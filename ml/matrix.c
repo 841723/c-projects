@@ -3,6 +3,7 @@
 
 
 #include "common.h"
+#include "random.h"
 #include "matrix.h"
 #include "mnist.h"
 
@@ -52,6 +53,21 @@ matrix *mat_create(int rows, int cols) {
     return mat;
 }
 
+matrix *mat_copy_rows(matrix *mat, int from_row, int end_row) {
+    if (mat == NULL) return NULL;
+    if (end_row > from_row || from_row < 0 || end_row > mat->rows) return NULL;
+
+    matrix *res = mat_create(end_row - from_row + 1, mat->cols);
+    for (int i = 0; i < res->rows; i++) {
+        for (int j = 0; j < res->cols; j++) {
+            res->data[i*res->cols+j] = mat->data[(i+from_row)*mat->cols+j];
+        }
+    }
+
+    return res;
+}
+
+
 matrix *mat_load(const char *pathname, int rows, int cols) {
     FILE *f = fopen(pathname, "rb");
     if (f == NULL) {
@@ -89,6 +105,15 @@ void mat_fill(matrix *mat, float value) {
         }
     }
 }
+void mat_random(matrix *mat, float min, float max) {
+    if (mat == NULL) return;
+
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            mat->data[i*mat->cols+j] = get_random(min, max);
+        }
+    }
+}
 
 int mat_add(matrix *res, matrix *a, matrix *b) {
     if (res == NULL || a == NULL || b == NULL) return FALSE;
@@ -103,6 +128,18 @@ int mat_add(matrix *res, matrix *a, matrix *b) {
     }
     return TRUE;
 }
+
+int mat_add_constant(matrix *res, matrix *a, float b) {
+    if (res == NULL || a == NULL) return FALSE;
+
+    for (int i = 0; i < res->rows; i++) {
+        for (int j = 0; j < res->cols; j++) {
+            res->data[i*res->cols+j] = a->data[i*res->cols+j] + b;
+        }
+    }
+    return TRUE;
+}
+
 
 
 int mat_sub(matrix *res, matrix *a, matrix *b) {
@@ -137,6 +174,16 @@ int mat_mul(matrix *res, matrix *a, matrix *b) {
     return TRUE;
 }
 
+float mat_sum_values(matrix *mat) {
+    if (mat == NULL) return -1.0f;
+    float total_sum = 0;
+
+    for (int i = 0; i < mat->rows*mat->cols; i++) {
+        total_sum += mat->data[i];
+    }
+
+    return total_sum;
+}
 
 void mat_print(matrix *mat) {
     if (mat == NULL) return;
@@ -152,4 +199,10 @@ void mat_print(matrix *mat) {
         }
         printf("\n");
     }
+}
+
+void mat_print_shape(matrix *mat) {
+    if (mat == NULL) return;
+
+    printf("rows %d\tcols %d\n", mat->rows, mat->cols);
 }

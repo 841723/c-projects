@@ -21,10 +21,11 @@ void compare_results(matrix *results, matrix *labels) {
     mat_fill(mat_error, 0);
     matrix *mat_nums = mat_create(1, 10);
     mat_fill(mat_nums, 0);
+    int error_printed = FALSE;
 
     for (int i = 0; i < results->rows; i++) {
         max_in_row_idx = -1;
-        max_in_row_val = 0.0f;
+        max_in_row_val = -1e30f;
         label = -1;
 
         for (int j = 0; j < results->cols; j++) {
@@ -40,7 +41,13 @@ void compare_results(matrix *results, matrix *labels) {
         }
 
         if (max_in_row_idx == -1 || label == -1) {
-            printf("an error has occurred\n");
+            if (!error_printed) {
+                printf("an error has occurred\n");
+                for (int error_i = 0; error_i < results->cols; error_i++) {
+                    printf("\t%d: label=%.2f res=%.2f\n", error_i, labels->data[error_i], results->data[error_i]);
+                }
+                error_printed = TRUE;
+            }
         }
         if (label == max_in_row_idx) {
             correct++;
@@ -84,7 +91,7 @@ int main() {
     //     printf("\n");
     // }
 
-    layer *l = nn_create_layer();
+    layer *l = nn_create_layer(10);
     neural_network *nn = nn_create_neural_network();
 
     if (nn_add_layer_to_neural_network(nn, l) == FALSE) {
