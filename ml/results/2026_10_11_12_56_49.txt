@@ -1,0 +1,17 @@
+2026/10/11 12:56:49
+
+Correct predictions 8927
+Wrong predictions 1073
+Total predictions 10000
+
+Precision by image matrix:
+  0: 98.06%
+  1: 97.80%
+  2: 85.08%
+  3: 91.49%
+  4: 90.43%
+  5: 77.69%
+  6: 96.56%
+  7: 89.98%
+  8: 81.62%
+  9: 82.06%

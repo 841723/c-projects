@@ -1,0 +1,17 @@
+2026/10/11 13:03:55
+
+epochs=1lr=0.30n_layers=1  0: n_cells=10correct_predictions=8865
+wrong_predictions=1135
+total_predictions=10000
+
+Precision by image matrix:
+  0: precision=98.27%
+  1: precision=98.15%
+  2: precision=86.43%
+  3: precision=93.56%
+  4: precision=86.66%
+  5: precision=74.10%
+  6: precision=97.18%
+  7: precision=90.86%
+  8: precision=71.56%
+  9: precision=86.92%

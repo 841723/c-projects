@@ -53,17 +53,40 @@ matrix *mat_create(int rows, int cols) {
     return mat;
 }
 
+matrix *mat_create_not_allocate(int rows, int cols) {
+    matrix *mat = malloc(sizeof(matrix));
+
+    if (mat == NULL) {
+        return NULL;
+    }
+
+    mat->cols = cols;
+    mat->rows = rows;
+    mat->data = NULL;
+
+    return mat;
+}
+
 matrix *mat_copy_rows(matrix *mat, int from_row, int end_row) {
     if (mat == NULL) return NULL;
-    if (end_row > from_row || from_row < 0 || end_row > mat->rows) return NULL;
+    if (end_row < from_row || from_row < 0 || end_row > mat->rows) return NULL;
 
-    matrix *res = mat_create(end_row - from_row + 1, mat->cols);
+    matrix *res = mat_create_not_allocate(end_row - from_row + 1, mat->cols);
     for (int i = 0; i < res->rows; i++) {
         for (int j = 0; j < res->cols; j++) {
             res->data[i*res->cols+j] = mat->data[(i+from_row)*mat->cols+j];
         }
     }
 
+    return res;
+}
+
+matrix *mat_copy_soft(matrix *mat, int first_row_to_copy, int num_rows_to_copy) {
+    if (mat == NULL) return NULL;
+    if (first_row_to_copy + num_rows_to_copy > mat->rows) return NULL;
+
+    matrix *res = mat_create(num_rows_to_copy, mat->cols);
+    res->data = mat->data + first_row_to_copy*mat->cols;
     return res;
 }
 

@@ -7,7 +7,7 @@
 
 typedef struct layer {
     int n_cells;
-    float b;
+    matrix *b;
     matrix *w;
 } layer ;
 
@@ -27,7 +27,7 @@ matrix *nn_train_predict(neural_network *nn, matrix *test_data);
 
 // float nn_sigmoid(float x);
 
-void nn_free_layer(layer *l);
+// void _nn_free_layer(layer *l);
 void nn_free_neural_network(neural_network *nn);
 
 #endif
