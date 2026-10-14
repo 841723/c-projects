@@ -39,41 +39,158 @@ void _nn_free_layer(layer *l) {
     free(l);
 }
 
+layer *_nn_create_layer(int n_cells, OUTPUT_FUNCTION of) {
+    // TODO esto creo que no funciona bien
+    layer *l = malloc(sizeof(struct layer));
+
+    l->n_cells = n_cells;
+    l->of = of;
+
+    return l;
+}
+
+int _nn_add_component_to_nn(
+    neural_network *nn, COMPONENT_TYPE ct, COMPONENT_FLAG cf, 
+    int rows, int cols, component* a, component* b
+) {
+
+    if (rows < 0 || cols < 0) return FALSE;
+    // TODO esto creo que no funciona bien
+    component *c = malloc(sizeof(struct component));
+
+    c->ct = ct;
+    c->cf = cf;
+    c->val = mat_create(rows, cols);
+    c->inputs[0] = a;
+    c->inputs[1] = b;
+
+    if (ct == CT_VAR) {
+        nn->n_vars += rows * cols;
+    }
+
+    // TODO: añadir el componente recien creado al nn->components
+    // nn->n_components++;
+
+    return TRUE;
+}
+
+int _nn_component_var(neural_network *nn, int rows, int cols) {
+
+    return _nn_add_component_to_nn(nn, CT_VAR, 0, rows, cols, NULL, NULL);
+}
+
+int _nn_component_input(neural_network *nn, int rows, int cols) {
+
+    return _nn_add_component_to_nn(nn, CT_INPUT, 0, rows, cols, NULL, NULL);
+}
+
+int _nn_component_output(neural_network *nn, int rows, int cols) {
+
+    return _nn_add_component_to_nn(nn, CT_OUTPUT, 0, rows, cols, NULL, NULL);
+}
+
+int _nn_component_add(neural_network *nn, component *a, component *b) {
+    if (a->val->rows != b->val->rows || a->val->cols != b->val->cols) return FALSE;
+
+    return _nn_add_component_to_nn(nn, CT_ADD, 0, a->val->rows, a->val->cols, a, b);
+}
+
+int _nn_component_sub(neural_network *nn, component *a, component *b) {
+    if (a->val->rows != b->val->rows || a->val->cols != b->val->cols) return FALSE;
+
+    return _nn_add_component_to_nn(nn, CT_SUB, 0, a->val->rows, a->val->cols, a, b);
+}
+
+int _nn_component_mul(neural_network *nn, component *a, component *b) {
+    if (a->val->cols != b->val->rows) return FALSE;
+
+    return _nn_add_component_to_nn(nn, CT_MUL, 0, a->val->rows, b->val->cols, a, b);
+}
+
+int _nn_component_relu(neural_network *nn, component *a) {
+
+    return _nn_add_component_to_nn(nn, CT_RELU, 0, 1, a->val->cols, NULL);
+}
+
+int _nn_component_softmax(neural_network *nn, component *a) {
+
+    return _nn_add_component_to_nn(nn, CT_SOFTMAX, 0, 1, a->val->cols, NULL);
+}
+
+
+int _nn_forward(neural_network *nn) {
+    component *cur;
+    for (int i = 0; i < nn->n_components; i++) {
+        cur = nn->components[i];
+        
+        switch (cur->ct) {
+            case CT_ADD: { mat_add(cur->val, cur->inputs[0]->val, cur->inputs[0]->val); } break;
+            case CT_SUB: { mat_sub(cur->val, cur->inputs[0]->val, cur->inputs[0]->val); } break;
+            case CT_MUL: { mat_mul(cur->val, cur->inputs[0]->val, cur->inputs[0]->val); } break;
+    
+            case CT_RELU: { mat_relu(cur->val, cur->inputs[0]->val); } break;
+            case CT_SOFTMAX: { mat_softmax(cur->val, cur->inputs[0]->val); } break;
+
+            default:
+                continue;
+        }
+    }
+}
+
 
 /**********************************************
    Exported functions
 ***********************************************/
 
-layer* nn_create_layer(int n_cells) {
-    layer *l = malloc(sizeof(struct layer));
-
-    l->n_cells = n_cells;
-    matrix *mat_b = mat_create(1, l->n_cells);
-    mat_random(mat_b, -1 ,1);
-    l->b = mat_b;
-    
-    matrix *mat_w = mat_create(IMAGE_SIZE*IMAGE_SIZE, l->n_cells);
-    mat_random(mat_w, -0.5 ,0.5);
-    l->w = mat_w; 
-
-    return l;
-}
-
-neural_network* nn_create_neural_network() {
+neural_network* nn_create_neural_network(int epochs, float lr) {
     neural_network *nn = malloc(sizeof(struct neural_network));
 
+    nn->epochs = epochs;
+    nn->lr = lr;
+    nn->n_vars = 0;
+    nn->n_components = 0;
     nn->n_layers = 0;
-    nn->epochs = 30;
-    nn->lr = 0.1f;
+
+    component *input = _nn_component_input(nn, 1, IMAGE_SIZE*IMAGE_SIZE); 
+
+    component *output = _nn_component_output(nn, 1, 10);
 
     return nn;
 }
 
-int nn_add_layer_to_neural_network(neural_network *nn, layer *l) {
-    if (nn->n_layers >= MAX_N_LAYERS) {
+int nn_add_layer_to_neural_network(neural_network *nn, int n_cells, OUTPUT_FUNCTION of) {
+    if (nn->n_components >= MAX_N_LAYERS) {
         return FALSE;
     }
-    nn->layers[nn->n_layers++] = l;
+
+    if (nn->n_components < 2) return FALSE;
+
+    component *an_1 = nn->components[nn->n_components - 2];
+
+    component *wn = _nn_component_var(nn, n_cells, an_1->val->cols);
+    mat_random(wn->val, -1, 1);
+
+    component *bn = _nn_component_var(nn, n_cells, an_1->val->cols);
+    mat_random(bn->val, -1, 1);
+
+
+    component *azn = _nn_component_mul(nn, wn, an_1);
+    component *bzn = _nn_component_add(nn, azn, bn);
+
+    switch (of) {
+        case OF_RELU:
+            component *an = _nn_component_relu(nn, bzn);
+            break;
+        case OF_SOFTMAX:
+            component *an = _nn_component_softmax(nn, bzn);
+            break;
+
+        default:
+            return FALSE;
+    }
+
+    // nn->layers[nn->n_layers++] = _nn_create_layer(n_cells, of);
+    // nn->n_layers++
 
     return TRUE;
 }
