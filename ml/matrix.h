@@ -20,6 +20,8 @@ int mat_add(matrix *res, matrix *a, matrix *b);
 int mat_add_constant(matrix *res, matrix *a, float b);
 int mat_sub(matrix *res, matrix *a, matrix *b);
 int mat_mul(matrix *res, matrix *a, matrix *b);
+int mat_relu(matrix *res, matrix *a);
+int mat_softmax(matrix *res, matrix *a);
 float mat_sum_values(matrix *mat);
 
 void mat_print(matrix *mat);

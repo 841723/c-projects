@@ -100,7 +100,7 @@ matrix *mat_load(const char *pathname, int rows, int cols) {
     unsigned long filesize = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    long to_read = min(filesize, rows * cols * sizeof(float));
+    long to_read = MIN(filesize, rows * cols * sizeof(float));
 
     matrix *mat = mat_create(rows, cols);
     if (mat == NULL) {
@@ -197,6 +197,26 @@ int mat_mul(matrix *res, matrix *a, matrix *b) {
     return TRUE;
 }
 
+int mat_relu(matrix *res, matrix *a) {
+    // TODO: implementar
+    if (res == NULL || res->data == NULL) return FALSE;
+    if (a == NULL || a->data == NULL) return FALSE;
+    if (a->rows != res->rows || a->cols != res->cols) return FALSE;
+
+    for (int i = 0; i < a->rows; i++) {
+        for (int j = 0; j < a->cols; j++) {
+            res->data[i*a->cols+j] = MAX(a->data[i*a->cols+j], 0.0f);
+        } 
+    }
+    return TRUE;
+}
+
+int mat_softmax(matrix *res, matrix *a) {
+    // TODO: implementar
+    return TRUE;
+}
+
+
 float mat_sum_values(matrix *mat) {
     if (mat == NULL) return -1.0f;
     float total_sum = 0;
@@ -213,8 +233,8 @@ void mat_print(matrix *mat) {
     
     int max_rows = 4, max_cols = 15;
 
-    int rows = min(max_rows, mat->rows);
-    int cols = min(max_cols, mat->cols);
+    int rows = MIN(max_rows, mat->rows);
+    int cols = MIN(max_cols, mat->cols);
 
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {

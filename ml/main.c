@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <string.h>
 
 
 #include "results.h"
@@ -21,7 +22,7 @@ int main() {
 
     struct timeval inicio, fin;
 
-    #define PROD
+    #define TEST_2
 
     #ifdef TEST_1
     for (int i = 0; i < 1; i++) {
@@ -34,12 +35,40 @@ int main() {
     }
     #endif
 
+    #ifdef TEST_2
+    neural_network *nn = nn_create_neural_network(10, 0.01f);
+
+    printf("nn created \n");
+
+    if (nn_add_layer_to_neural_network(nn, 10, OF_SOFTMAX) == FALSE) {
+        perror("Error adding layer to neural network\n");
+        return 1;
+    }
+
+    for (int i = 0; i < nn->n_components; i++) {
+        component *cur = nn->components[i];
+        printf("type: %d\n", cur->ct);
+    }
+    
+    printf("rows: %d\n", nn->components[0]->val->rows);
+    printf("cols: %d\n", nn->components[0]->val->cols);
+    
+    memcpy(nn->components[0]->val->data, train_images->data, 1);
+    // _nn_forward(nn);
+    // for (int i = 0; i < nn->components[nn->n_components-1]->val->rows; i++) {
+    //     for (int j = 0; j < nn->components[nn->n_components-1]->val->cols; j++) {
+    //         printf("  %2.f", nn->components[nn->n_components-1]->val->data[i*nn->components[nn->n_components-1]->val->cols+j]);
+    //     }
+    //     printf("\n");
+    // }
+    #endif
+
 
     #ifdef PROD
-    layer *l = nn_create_layer(10);
-    neural_network *nn = nn_create_neural_network();
+    neural_network *nn = nn_create_neural_network(10, 0.01f);
+    
 
-    if (nn_add_layer_to_neural_network(nn, l) == FALSE) {
+    if (nn_add_layer_to_neural_network(nn, 10, OF_SOFTMAX) == FALSE) {
         perror("Error adding layer to neural network\n");
         return 1;
     }

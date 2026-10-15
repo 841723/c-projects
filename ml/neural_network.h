@@ -41,7 +41,7 @@ typedef struct component {
 
     matrix *val;
     
-    component inputs[COMPONENT_MAX_INPUTS];
+    struct component *inputs[COMPONENT_MAX_INPUTS];
 
 } component;
 
@@ -62,22 +62,22 @@ typedef struct {
 } neural_network;
 
 
-layer *_nn_create_layer(int n_cells, OUTPUT_FUNCTION of);
 
-int _nn_add_component_to_nn(neural_network *nn, component *c);
+// component *_nn_component_var(neural_network *nn, int rows, int cols);
+// component *_nn_component_input(neural_network *nn, int rows, int cols);
+// component *_nn_component_output(neural_network *nn, int rows, int cols);
 
-int _nn_component_var(neural_network *nn, int rows, int cols);
-int _nn_component_input(neural_network *nn, int rows, int cols);
-int _nn_component_output(neural_network *nn, int rows, int cols);
+// component *_nn_component_add(neural_network *nn, component *a, component *b);
+// component *_nn_component_sub(neural_network *nn, component *a, component *b);
+// component *_nn_component_mul(neural_network *nn, component *a, component *b);
 
-int _nn_component_add(neural_network *nn, component *a, component *b);
-int _nn_component_sub(neural_network *nn, component *a, component *b);
-int _nn_component_mul(neural_network *nn, component *a, component *b);
-
-int _nn_component_relu(neural_network *nn, component *a);
-int _nn_component_softmax(neural_network *nn, component *a);
+// component *_nn_component_relu(neural_network *nn, component *a);
+// component *_nn_component_softmax(neural_network *nn, component *a);
 
 layer *_nn_create_layer(int n_cells, OUTPUT_FUNCTION of);
+
+int _nn_forward(neural_network *nn);
+
 
 neural_network *nn_create_neural_network(int epochs, float lr);
 int nn_add_layer_to_neural_network(neural_network *nn, int n_cells, OUTPUT_FUNCTION of);
