@@ -19,6 +19,7 @@ int main() {
         &train_labels,
         &test_labels
     );
+    printf("files loaded successfully\n");
 
     struct timeval inicio, fin;
 
@@ -40,7 +41,7 @@ int main() {
 
     printf("nn created \n");
 
-    if (nn_add_layer_to_neural_network(nn, 10, OF_SOFTMAX) == FALSE) {
+    if (nn_add_layer_to_neural_network(nn, 10, OF_RELU) == FALSE) {
         perror("Error adding layer to neural network\n");
         return 1;
     }
@@ -49,18 +50,16 @@ int main() {
         component *cur = nn->components[i];
         printf("type: %d\n", cur->ct);
     }
+    memcpy(
+        nn->components[0]->val->data, 
+        train_images->data, 
+        nn->components[0]->val->cols*sizeof(float)
+    );
+
+    _nn_forward(nn);
     
-    printf("rows: %d\n", nn->components[0]->val->rows);
-    printf("cols: %d\n", nn->components[0]->val->cols);
-    
-    memcpy(nn->components[0]->val->data, train_images->data, 1);
-    // _nn_forward(nn);
-    // for (int i = 0; i < nn->components[nn->n_components-1]->val->rows; i++) {
-    //     for (int j = 0; j < nn->components[nn->n_components-1]->val->cols; j++) {
-    //         printf("  %2.f", nn->components[nn->n_components-1]->val->data[i*nn->components[nn->n_components-1]->val->cols+j]);
-    //     }
-    //     printf("\n");
-    // }
+    mnist_display_image(nn->components[0]->val->data);
+    mnist_get_pred(nn->components[nn->n_components-1]->val);
     #endif
 
 

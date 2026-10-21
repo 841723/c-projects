@@ -50,6 +50,13 @@ matrix *mat_create(int rows, int cols) {
         return NULL;
     }
 
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            mat->data[i*mat->cols+j] = 0.0f;
+        }
+    }
+
+
     return mat;
 }
 

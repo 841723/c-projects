@@ -190,14 +190,15 @@ int nn_add_layer_to_neural_network(neural_network *nn, int n_cells, OUTPUT_FUNCT
     if (nn->n_components < 2) return FALSE;
 
     component *an_1 = nn->components[nn->n_components - 2];
+    printf("nn_add_layer_to_neural_network\n");
 
     component *wn = _nn_component_var(nn, n_cells, an_1->val->rows);
     if (wn == NULL) return FALSE;
-    mat_random(wn->val, -1, 1);
+    mat_random(wn->val, -5, 5);
 
     component *bn = _nn_component_var(nn, n_cells, an_1->val->cols);
     if (wn == NULL) return FALSE;
-    mat_random(bn->val, -1, 1);
+    mat_random(bn->val, -5, 5);
 
 
     component *azn = _nn_component_mul(nn, wn, an_1);

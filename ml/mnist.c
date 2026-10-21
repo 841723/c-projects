@@ -71,3 +71,24 @@ void mnist_display_image(float *image) {
         printf("\033[0m\n");
     }
 }
+void mnist_get_pred(matrix *res) {
+    if (res == NULL) return;
+
+    int max_idx = -1;
+    float total_prob = 0.0f;
+
+    for (int i = 0; i < res->cols; i++) {
+        printf("%d:%2.f  ", i, res->data[i]);
+        
+        total_prob += res->data[i];
+
+        if (max_idx == -1 || res->data[i] > res->data[max_idx]) {
+            max_idx = i;
+        }
+    }
+    printf("\n");
+
+    if (total_prob*total_prob-1 < 0.05) {
+        printf("\nprobabilities do NOT add to 1. sum is %3.2f\n", total_prob);
+    }
+}

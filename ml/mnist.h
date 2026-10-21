@@ -14,4 +14,6 @@ void mnist_get_data(
 );
 
 void mnist_display_image(float *image);
+
+void mnist_get_pred(matrix *res);
 #endif
