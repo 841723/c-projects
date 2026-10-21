@@ -48,18 +48,11 @@ int main() {
 
     for (int i = 0; i < nn->n_components; i++) {
         component *cur = nn->components[i];
-        printf("type: %d\n", cur->ct);
+        printf("name: %s\n", cur->name);
     }
-    memcpy(
-        nn->components[0]->val->data, 
-        train_images->data, 
-        nn->components[0]->val->cols*sizeof(float)
-    );
-
-    _nn_forward(nn);
     
-    mnist_display_image(nn->components[0]->val->data);
-    mnist_get_pred(nn->components[nn->n_components-1]->val);
+    nn_train_neural_network(nn, train_images, train_labels);
+
     #endif
 
 

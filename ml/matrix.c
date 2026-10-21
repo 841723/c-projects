@@ -235,6 +235,20 @@ float mat_sum_values(matrix *mat) {
     return total_sum;
 }
 
+int mat_is_all_zero(matrix *mat) {
+    if (mat == NULL) return FALSE;
+
+    int res = TRUE;
+
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            res &= mat->data[i*mat->cols+j] == 0;
+        }
+    }
+    return res;
+}
+
+
 void mat_print(matrix *mat) {
     if (mat == NULL) return;
     

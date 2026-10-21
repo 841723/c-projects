@@ -78,7 +78,7 @@ void mnist_get_pred(matrix *res) {
     float total_prob = 0.0f;
 
     for (int i = 0; i < res->cols; i++) {
-        printf("%d:%2.f  ", i, res->data[i]);
+        printf("%d:%.2f  ", i, res->data[i]);
         
         total_prob += res->data[i];
 

@@ -36,6 +36,7 @@ typedef enum {
 
 
 typedef struct component {
+    char name[128];
     COMPONENT_TYPE ct;
     COMPONENT_FLAG cf;
 

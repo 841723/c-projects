@@ -24,6 +24,8 @@ int mat_relu(matrix *res, matrix *a);
 int mat_softmax(matrix *res, matrix *a);
 float mat_sum_values(matrix *mat);
 
+int mat_is_all_zero(matrix *mat);
+
 void mat_print(matrix *mat);
 void mat_print_shape(matrix *mat);
 
