@@ -16,4 +16,7 @@ void mnist_get_data(
 void mnist_display_image(float *image);
 
 void mnist_get_pred(matrix *res);
+
+int mnist_is_correct_pred(matrix *pred, float *exp_output);
+
 #endif

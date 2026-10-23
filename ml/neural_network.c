@@ -60,6 +60,7 @@ component *_nn_add_component_to_nn(
     c->ct = ct;
     c->cf = cf;
     c->val = mat_create(rows, cols);
+    c->grad = mat_create(rows, cols);
     c->inputs[0] = a;
     c->inputs[1] = b;
 
@@ -83,17 +84,7 @@ component *_nn_add_component_to_nn(
     }
     
     nn->components = tmp_components;
-
-    nn->n_components++;
-    if (nn->n_components > 2) {
-        // keep output as last component
-        nn->components[nn->n_components - 1] = nn->components[nn->n_components - 2];
-        nn->components[nn->n_components - 2] = c;
-    }
-    else {
-        // add input/output components
-        nn->components[nn->n_components - 1] = c;
-    }
+    nn->components[nn->n_components++] = c;
 
     return c;
 }
@@ -105,12 +96,30 @@ component *_nn_component_var(neural_network *nn, int rows, int cols, char *name)
 
 component *_nn_component_input(neural_network *nn, int rows, int cols, char *name) {
 
-    return _nn_add_component_to_nn(nn, CT_INPUT, 0, rows, cols, NULL, NULL, name);
+    component *res = _nn_add_component_to_nn(nn, CT_INPUT, 0, rows, cols, NULL, NULL, name);
+    nn->input_idx = nn->n_components-1;
+    return res;
 }
 
-component *_nn_component_output(neural_network *nn, int rows, int cols, char *name) {
+component *_nn_component_cost(neural_network *nn, component *a, component *b, char *name) {
 
-    return _nn_add_component_to_nn(nn, CT_OUTPUT, 0, rows, cols, NULL, NULL, name);
+    component *res = _nn_add_component_to_nn(nn, CT_COST, 0, 1, nn->output_size, a, b, name);
+    nn->cost_idx = nn->n_components-1;
+    return res;
+}
+
+component *_nn_component_output(neural_network *nn, component *a, char *name) {
+
+    component *res = _nn_add_component_to_nn(nn, CT_OUTPUT, 0, a->val->rows, a->val->cols, a, NULL, name);
+    nn->output_idx = nn->n_components-1;
+    return res;
+}
+
+component *_nn_component_expected_output(neural_network *nn, char *name) {
+
+    component *res = _nn_add_component_to_nn(nn, CT_EXPECTED_OUTPUT, 0, 1, nn->output_size, NULL, NULL, name);
+    nn->expected_output_idx = nn->n_components-1;
+    return res;
 }
 
 component *_nn_component_add(neural_network *nn, component *a, component *b, char *name) {
@@ -143,73 +152,144 @@ component *_nn_component_softmax(neural_network *nn, component *a, char *name) {
 
 
 int _nn_forward(neural_network *nn) {
+
+    if (nn == NULL) return FALSE;
+    
     component *cur;
-    int res;
+    int res =  TRUE;
     for (int i = 0; i < nn->n_components; i++) {
         cur = nn->components[i];
-
-
         
         switch (cur->ct) {
+            case CT_NULL: continue;
+
+            case CT_INPUT: continue; 
+            case CT_OUTPUT: { 
+                cur->val->rows = cur->inputs[0]->val->rows;
+                cur->val->cols = cur->inputs[0]->val->cols;
+                memcpy(cur->val->data, cur->inputs[0]->val->data, cur->val->rows * cur->val->cols * sizeof(float)); 
+            } break;
+            case CT_EXPECTED_OUTPUT: continue; 
+            case CT_COST: { res = mat_cost(cur->val, cur->inputs[0]->val, cur->inputs[1]->val); } break;
+
             case CT_ADD: { res = mat_add(cur->val, cur->inputs[0]->val, cur->inputs[1]->val); } break;
             case CT_SUB: { res = mat_sub(cur->val, cur->inputs[0]->val, cur->inputs[1]->val); } break;
             case CT_MUL: { res = mat_mul(cur->val, cur->inputs[0]->val, cur->inputs[1]->val); } break;
-    
+            
             case CT_RELU: { res = mat_relu(cur->val, cur->inputs[0]->val); } break;
             case CT_SOFTMAX: { res = mat_softmax(cur->val, cur->inputs[0]->val); } break;
 
-            default:
-                continue;
+            case CT_VAR: continue; 
         }
 
         if (!res) {
-            printf("error\n");
+            printf("error forward\n");
             return FALSE;
         }
-
-        // if (cur->ct == CT_RELU) {
-        //     printf("forward component %s\n", cur->name);
-        //     printf("\ttype %d\n", cur->ct);
-        //     printf("\tinput a %s\n", cur->inputs[0]->name);
-        //     printf("\tinput b %s\n", cur->inputs[1]->name);
-        //     printf("\n");
-        //     if (cur->inputs[0] != NULL) {
-        //         printf("cur->inputs[0]->val: is all zero: %d\n", mat_is_all_zero(cur->inputs[0]->val));
-        //         mat_print(cur->inputs[0]->val);
-        //         printf("\n");
-        //     }
-        //     if (cur->inputs[1] != NULL) {
-        //         printf("cur->inputs[1]->val: is all zero: %d\n", mat_is_all_zero(cur->inputs[1]->val));
-        //         mat_print(cur->inputs[1]->val);
-        //         printf("\n");
-        //     }
-        //     printf("cur->val: is all zero: %d\n", mat_is_all_zero(cur->val));
-        //     mat_print(cur->val);
-        // }
     }
     return TRUE;
 }
 
+int _nn_backward(neural_network *nn) {
+    if (nn == NULL) return FALSE;
+    component *cur;
+    int res = TRUE, res2 = TRUE;
+
+    for (int i = 0; i < nn->n_components; i++) {
+        cur = nn->components[i];
+        if (cur->ct == CT_COST) {
+            mat_fill(cur->grad, 1.0f);
+        }
+        else {
+            mat_clear(cur->grad);
+        }
+    }
+
+    for (int i = nn->n_components - 1; i >= 0; i--) {
+        cur = nn->components[i];
+        
+        switch (cur->ct) {
+            case CT_NULL: continue;
+
+            case CT_INPUT: continue;
+            case CT_OUTPUT: continue;
+            case CT_EXPECTED_OUTPUT: continue;
+            case CT_COST: { 
+                res = mat_cost_add_grad(cur->inputs[0]->grad, cur->inputs[0]->val, cur->inputs[1]->val, cur->grad);
+                // mat_print(cur->inputs[0]->grad);
+            } break; 
+
+            case CT_ADD: { 
+                res  = mat_add(cur->inputs[0]->grad, cur->inputs[0]->grad, cur->grad);
+                res2 = mat_add(cur->inputs[1]->grad, cur->inputs[1]->grad, cur->grad);
+            } break; 
+            case CT_SUB: { 
+                res  = mat_add(cur->inputs[0]->grad, cur->inputs[0]->grad, cur->grad);
+                res2 = mat_sub(cur->inputs[1]->grad, cur->inputs[1]->grad, cur->grad);
+            } break; 
+            case CT_MUL: { 
+                // res  = mat_mul(cur->inputs[0]->grad, cur->inputs[0]->val, cur->grad);
+                // res2 = mat_sub_add_grad(cur->inputs[1]->grad, cur->inputs[1]->val, cur->grad);
+            } break; 
+            
+            case CT_RELU: { 
+                res = mat_relu_add_grad(cur->inputs[0]->grad, cur->inputs[0]->val, cur->grad);
+            } break; 
+            case CT_SOFTMAX: { continue; } break; 
+
+            case CT_VAR: { 
+                mat_scale(cur->grad, nn->lr); 
+                mat_sub(cur->val, cur->val, cur->grad);
+            } break; 
+        }
+        if (!res || !res2) {
+            printf("error backward\n");
+            return  FALSE;   
+    
+        }
+    }
+
+
+    return TRUE;
+}
 
 /**********************************************
    Exported functions
 ***********************************************/
 
-neural_network* nn_create_neural_network(int epochs, float lr) {
+neural_network* nn_create_neural_network(int epochs, float lr, int batch_size, int input_size, int output_size) {
     neural_network *nn = malloc(sizeof(neural_network));
 
     nn->epochs = epochs;
     nn->lr = lr;
+    nn->batch_size = batch_size;
+    nn->input_size = input_size;
+    nn->output_size = output_size;
+
     nn->n_vars = 0;
     nn->n_components = 0;
     nn->n_layers = 0;
 
-    if (_nn_component_input(nn, 1, IMAGE_SIZE*IMAGE_SIZE, "input") == NULL) {
+    component *input = _nn_component_input(nn, 1, IMAGE_SIZE*IMAGE_SIZE, "x");
+    if (input == NULL) {
         // TODO: free nn
         return NULL;
     }
 
-    if (_nn_component_output(nn, 1, 10, "output") == NULL) {
+    component *expected_output = _nn_component_expected_output(nn, "y");
+    if (expected_output == NULL) {
+        // TODO: free nn
+        return NULL;
+    }
+
+    component *cost = _nn_component_cost(nn, input, expected_output, "c");
+    if (cost == NULL) {
+        // TODO: free nn
+        return NULL;
+    }
+
+    component *output = _nn_component_output(nn, input, "^y");
+    if (output == NULL) {
         // TODO: free nn
         return NULL;
     }
@@ -220,9 +300,13 @@ neural_network* nn_create_neural_network(int epochs, float lr) {
 int nn_add_layer_to_neural_network(neural_network *nn, int n_cells, OUTPUT_FUNCTION of) {
 
     if (nn->n_components < 2) return FALSE;
-
-    component *an_1 = nn->components[nn->n_components - 2];
     printf("nn_add_layer_to_neural_network\n");
+    
+    component *an_1 = nn->components[nn->n_components - 1]->inputs[0];
+    
+    // TODO: hacer free de las 3 componentes que borramos
+    nn->n_components -= 3;
+
 
     component *wn = _nn_component_var(nn, an_1->val->cols, n_cells, "wn");
     if (wn == NULL) return FALSE;
@@ -241,11 +325,11 @@ int nn_add_layer_to_neural_network(neural_network *nn, int n_cells, OUTPUT_FUNCT
     component *an = NULL;    
     switch (of) {
         case OF_RELU:
-            an = _nn_component_relu(nn, bzn, "relu");
+            an = _nn_component_relu(nn, bzn, "r");
             if (an == NULL) return FALSE;
             break;
         case OF_SOFTMAX:
-            an = _nn_component_softmax(nn, bzn, "softmax");
+            an = _nn_component_softmax(nn, bzn, "s");
             if (an == NULL) return FALSE;
             break;
 
@@ -253,7 +337,16 @@ int nn_add_layer_to_neural_network(neural_network *nn, int n_cells, OUTPUT_FUNCT
             return FALSE;
     }
 
+    component *expected_output = _nn_component_expected_output(nn, "y");
+    if (expected_output == NULL) return FALSE;
 
+    component *cost = _nn_component_cost(nn, an, expected_output, "c");
+    if (cost == NULL) return FALSE;
+
+    component *output = _nn_component_output(nn, an, "^y");
+    if (output == NULL) return FALSE;
+
+    
     // nn->layers[nn->n_layers++] = _nn_create_layer(n_cells, of);
     // nn->n_layers++
 
@@ -264,33 +357,52 @@ int nn_train_neural_network(neural_network *nn, matrix *train_data, matrix *trai
 
     if (train_data->rows != train_labels->rows) return FALSE;
     int status, max_idx, correct, total;
-    matrix *res;
+    float total_cost;
+    float *input;
+    float *expected_output;
+    matrix *output;
 
+    int num_batches = train_data->rows / nn->batch_size;
 
     for (int epoch = 0; epoch < nn->epochs; epoch++) {
         correct = 0; 
         total = 0;
-        for (int i = 0; i < train_data->rows; i++) {
-            memcpy(
-                nn->components[0]->val->data, 
-                train_data->data + i*train_data->cols, 
-                IMAGE_SIZE*IMAGE_SIZE*sizeof(float)
-            );
+        for (int batch = 0; batch < num_batches; batch++) {
+            total_cost = 0.0f;
+            for (int j = batch*nn->batch_size; j < (batch+1)*nn->batch_size-1; j++) {    
 
-            _nn_forward(nn);
+                input = train_data->data + j*train_data->cols;
+                expected_output = train_labels->data + j*train_labels->cols;
 
-            res = nn->components[nn->n_components-2]->val;
-            if (res->rows != 1) return FALSE;
-            max_idx = -1;
-            for (int j = 0; j < res->cols; j++) {
-                if (max_idx == -1 || res->data[max_idx] < res->data[j]) {
-                    max_idx = j;
+                memcpy(
+                    nn->components[nn->input_idx]->val->data, 
+                    input, 
+                    nn->input_size * sizeof(float)
+                );
+
+                memcpy(
+                    nn->components[nn->expected_output_idx]->val->data, 
+                    expected_output, 
+                    nn->output_size * sizeof(float)
+                );
+
+                _nn_forward(nn);
+                
+                _nn_backward(nn);
+
+                output = nn->components[nn->output_idx]->val;
+                for (int i = 0; i < output->cols; i++) {
+                    printf("%.2f  ", output->data[i]);
                 }
+                printf("\n");
+                correct += mnist_is_correct_pred(output, expected_output);
+                total++;
             }
-            total++;
-            correct += (train_labels->data[i*train_labels->cols+max_idx]);
+            printf(
+                "EPOCH %d/%d\tBATCH %d/%d\t-\tprecision: %.2f%%\n", 
+                epoch+1, nn->epochs, batch+1, num_batches, (float)correct/total*100
+            );
         }
-        printf("EPOCH %2d - correct:%d\ttotal:%d\tprecission:%.2f%%\n", epoch+1, correct, total, (float)correct/total*100);
     }
 
     // matrix *mat_z = mat_create(1,nn->layers[0]->n_cells);
@@ -350,6 +462,28 @@ int nn_train_neural_network(neural_network *nn, matrix *train_data, matrix *trai
 
 //     return res;
 // }
+
+int nn_predict(neural_network *nn, matrix *data, matrix *res) {
+    if (nn == NULL) return FALSE;
+    if (data == NULL || data->data == NULL) return FALSE;
+    if (data->rows != 1 || data->cols != nn->input_size) return FALSE;
+    if (res->rows != 1 || res->cols != nn->output_size) return FALSE;
+
+    memcpy(
+        nn->components[nn->input_idx]->val->data, 
+        data->data, 
+        nn->input_size * sizeof(float)
+    );
+    _nn_forward(nn);
+
+    memcpy(
+        res->data,
+        nn->components[nn->output_idx]->val->data,
+        nn->output_size * sizeof(float)
+    );
+
+    return TRUE;
+}
 
 void nn_free_neural_network(neural_network *nn) {
     if(nn == NULL) return;

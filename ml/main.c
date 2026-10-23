@@ -37,9 +37,14 @@ int main() {
     #endif
 
     #ifdef TEST_2
-    neural_network *nn = nn_create_neural_network(10, 0.01f);
+    neural_network *nn = nn_create_neural_network(1, 0.01f, 2000, IMAGE_SIZE*IMAGE_SIZE, 10);
 
     printf("nn created \n");
+
+    // if (nn_add_layer_to_neural_network(nn, 16, OF_RELU) == FALSE) {
+    //     perror("Error adding layer to neural network\n");
+    //     return 1;
+    // }
 
     if (nn_add_layer_to_neural_network(nn, 10, OF_RELU) == FALSE) {
         perror("Error adding layer to neural network\n");
@@ -51,7 +56,29 @@ int main() {
         printf("name: %s\n", cur->name);
     }
     
+    // gettimeofday(&inicio, NULL);
     nn_train_neural_network(nn, train_images, train_labels);
+    // gettimeofday(&fin, NULL);
+
+    int num_test_image = 53;
+    matrix *test_image = mat_create(1, IMAGE_SIZE * IMAGE_SIZE);
+    memcpy(
+        test_image->data,
+        test_images->data + (num_test_image * IMAGE_SIZE * IMAGE_SIZE),
+        IMAGE_SIZE * IMAGE_SIZE * sizeof(float)
+    );
+    matrix *res = mat_create(1, nn->output_size);
+
+    if (!nn_predict(nn, test_image, res)) {
+        printf("error in pred\n");
+        return 1;
+    }
+
+    mnist_display_image(test_image->data);
+    for (int i = 0; i < res->cols; i++) {
+        printf("\t%d : %.2f\n", i, res->data[i]);
+    }
+    printf("\n");
 
     #endif
 

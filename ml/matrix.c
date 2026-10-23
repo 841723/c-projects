@@ -145,6 +145,20 @@ void mat_random(matrix *mat, float min, float max) {
     }
 }
 
+void mat_clear(matrix *mat) {
+    mat_fill(mat, 0.0f);
+}
+
+void mat_scale(matrix *mat, float value) {
+    if (mat == NULL) return;
+
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            mat->data[i*mat->cols+j] *= value;
+        }
+    }
+}
+
 int mat_add(matrix *res, matrix *a, matrix *b) {
     if (res == NULL || a == NULL || b == NULL) return FALSE;
     if (a->cols != b->cols || a->cols != res->cols || a->rows != b->rows || a->rows != res->rows) {
@@ -159,6 +173,26 @@ int mat_add(matrix *res, matrix *a, matrix *b) {
     return TRUE;
 }
 
+int mat_add_add_grad(matrix *a_grad, matrix *a_val, matrix *cur_grad) {
+    if (a_grad == NULL || a_grad->data == NULL) return FALSE;
+    if (a_val == NULL || a_val->data == NULL) return FALSE;
+    if (cur_grad == NULL || cur_grad->data == NULL) return FALSE;
+    if (a_val->rows != a_grad->rows || a_val->cols != a_grad->cols) return FALSE;
+    if (a_val->rows != cur_grad->rows || a_val->cols != cur_grad->cols) return FALSE;
+
+    int idx;
+
+    for (int i = 0; i < a_val->rows; i++) {
+        for (int j = 0; j < a_val->cols; j++) {
+            idx = i*a_val->cols+j;
+            
+            a_grad->data[idx] += cur_grad->data[idx];
+        }
+    }
+
+    return TRUE;
+}
+
 int mat_add_constant(matrix *res, matrix *a, float b) {
     if (res == NULL || a == NULL) return FALSE;
 
@@ -169,8 +203,6 @@ int mat_add_constant(matrix *res, matrix *a, float b) {
     }
     return TRUE;
 }
-
-
 
 int mat_sub(matrix *res, matrix *a, matrix *b) {
     if (res == NULL || a == NULL || b == NULL) return FALSE;
@@ -183,6 +215,26 @@ int mat_sub(matrix *res, matrix *a, matrix *b) {
             res->data[i*res->cols+j] = a->data[i*res->cols+j] - b->data[i*res->cols+j];
         }
     }
+    return TRUE;
+}
+
+int mat_sub_add_grad(matrix *a_grad, matrix *a_val, matrix *cur_grad) {
+    if (a_grad == NULL || a_grad->data == NULL) return FALSE;
+    if (a_val == NULL || a_val->data == NULL) return FALSE;
+    if (cur_grad == NULL || cur_grad->data == NULL) return FALSE;
+    if (a_val->rows != a_grad->rows || a_val->cols != a_grad->cols) return FALSE;
+    if (a_val->rows != cur_grad->rows || a_val->cols != cur_grad->cols) return FALSE;
+
+    int idx;
+
+    for (int i = 0; i < a_val->rows; i++) {
+        for (int j = 0; j < a_val->cols; j++) {
+            idx = i*a_val->cols+j;
+            
+            a_grad->data[idx] -= cur_grad->data[idx];
+        }
+    }
+
     return TRUE;
 }
 
@@ -205,7 +257,6 @@ int mat_mul(matrix *res, matrix *a, matrix *b) {
 }
 
 int mat_relu(matrix *res, matrix *a) {
-    // TODO: implementar
     if (res == NULL || res->data == NULL) return FALSE;
     if (a == NULL || a->data == NULL) return FALSE;
     if (a->rows != res->rows || a->cols != res->cols) return FALSE;
@@ -218,10 +269,74 @@ int mat_relu(matrix *res, matrix *a) {
     return TRUE;
 }
 
+int mat_relu_add_grad(matrix *a_grad, matrix *a_val, matrix *cur_grad) {
+    if (a_grad == NULL || a_grad->data == NULL) return FALSE;
+    if (a_val == NULL || a_val->data == NULL) return FALSE;
+    if (cur_grad == NULL || cur_grad->data == NULL) return FALSE;
+    if (a_val->rows != a_grad->rows || a_val->cols != a_grad->cols) return FALSE;
+    if (a_val->rows != cur_grad->rows || a_val->cols != cur_grad->cols) return FALSE;
+
+    int idx;
+
+    for (int i = 0; i < a_val->rows; i++) {
+        for (int j = 0; j < a_val->cols; j++) {
+            idx = i*a_val->cols+j;
+            
+            a_grad->data[idx] += a_val->data[idx] > 0 
+                ? (cur_grad->data[idx])
+                : (0);
+        } 
+    }
+
+    return TRUE;
+}
+
+
 int mat_softmax(matrix *res, matrix *a) {
     // TODO: implementar
     return TRUE;
 }
+
+int mat_cost(matrix *res, matrix *a, matrix *b) {
+    if (res == NULL || res->data == NULL) return FALSE;
+    if (a == NULL || a->data == NULL) return FALSE;
+    if (b == NULL || b->data == NULL) return FALSE;
+    if (a->rows != res->rows || a->cols != res->cols) return FALSE;
+    if (a->rows != b->rows || a->cols != b->cols) return FALSE;
+
+    float base;
+    int idx;
+
+    for (int i = 0; i < a->rows; i++) {
+        for (int j = 0; j < a->cols; j++) {
+            idx = i*a->cols+j;
+            base = a->data[idx] - b->data[idx];
+            res->data[idx] = (base * base) / 2;
+        } 
+    }
+    return TRUE;
+}
+
+int mat_cost_add_grad(matrix *a_grad, matrix *a_val, matrix *b_val, matrix *cur_grad) {
+    if (a_grad == NULL || a_grad->data == NULL) return FALSE;
+    if (a_val == NULL || a_val->data == NULL) return FALSE;
+    if (b_val == NULL || b_val->data == NULL) return FALSE;
+    if (cur_grad == NULL || cur_grad->data == NULL) return FALSE;
+    if (a_val->rows != a_grad->rows || a_val->cols != a_grad->cols) return FALSE;
+    if (a_val->rows != b_val->rows || a_val->cols != b_val->cols) return FALSE;
+    if (a_val->rows != cur_grad->rows || a_val->cols != cur_grad->cols) return FALSE;
+    int idx = 0;
+    
+    for (int i = 0; i < a_val->rows; i++) {
+        for (int j = 0; j < a_val->cols; j++) {
+            idx = i*a_val->cols+j;
+
+            a_grad->data[idx] += cur_grad->data[idx] * (a_val->data[idx] - b_val->data[idx]);
+        } 
+    }
+    return TRUE;
+}
+
 
 
 float mat_sum_values(matrix *mat) {
