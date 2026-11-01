@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "common.h"
 #include "matrix.h"
 #include "mnist.h"
 
@@ -42,21 +43,25 @@ void mnist_get_data(
     
     *train_labels = mat_create(train_labels_read->rows, 10);
     *test_labels = mat_create(test_labels_read->rows, 10);
-    for (int i = 0; i < (*train_images)->rows; i++) {
-        for (int j = 0; j < 10; j++) {
-            (*train_labels)->data[i * 10 + j] = 0.0f;
+    
+    if (train_images != NULL && test_images != NULL) {
+        for (int i = 0; i < (*train_images)->rows; i++) {
+            for (int j = 0; j < 10; j++) {
+                (*train_labels)->data[i * 10 + j] = 0.0f;
+            }
+            int num = train_labels_read->data[i];
+            if (0 <= num && num <= 9) (*train_labels)->data[i * 10 + num] = 1.0f;
         }
-        int num = train_labels_read->data[i];
-        if (0 <= num && num <= 9) (*train_labels)->data[i * 10 + num] = 1.0f;
+    
+        for (int i = 0; i < (*test_images)->rows; i++) {
+            for (int j = 0; j < 10; j++) {
+                (*test_labels)->data[i * 10 + j] = 0.0f;
+            }
+            int num = test_labels_read->data[i];
+            if (0 <= num && num <= 9) (*test_labels)->data[i * 10 + num] = 1.0f;
+        }
     }
 
-    for (int i = 0; i < (*test_images)->rows; i++) {
-        for (int j = 0; j < 10; j++) {
-            (*test_labels)->data[i * 10 + j] = 0.0f;
-        }
-        int num = test_labels_read->data[i];
-        if (0 <= num && num <= 9) (*test_labels)->data[i * 10 + num] = 1.0f;
-    }
 
     mat_free(train_labels_read);
     mat_free(test_labels_read);
@@ -70,4 +75,43 @@ void mnist_display_image(float *image) {
         }
         printf("\033[0m\n");
     }
+}
+
+void mnist_get_pred(matrix *res) {
+    if (res == NULL) return;
+
+    int max_idx = -1;
+    float total_prob = 0.0f;
+
+    for (int i = 0; i < res->cols; i++) {
+        printf("%d:%.2f  ", i, res->data[i]);
+        
+        total_prob += res->data[i];
+
+        if (max_idx == -1 || res->data[i] > res->data[max_idx]) {
+            max_idx = i;
+        }
+    }
+    printf("\n");
+
+    if (total_prob*total_prob-1 < 0.05) {
+        printf("\nprobabilities do NOT add to 1. sum is %3.2f\n", total_prob);
+    }
+}
+
+int mnist_is_correct_pred(matrix *pred, float *exp_output) {
+    if (pred == NULL || pred->data == NULL) return FALSE;
+
+    int max_idx_pred = -1;
+    int max_idx_exp = -1;
+    for (int i = 0; i < pred->cols; i++) {
+        if (max_idx_pred == -1 || pred->data[i] > pred->data[max_idx_pred]) {
+            max_idx_pred = i;
+        }
+        if (*(exp_output+i)) {
+            max_idx_exp = i;
+        }
+    }
+
+    return max_idx_exp == max_idx_pred;
 }

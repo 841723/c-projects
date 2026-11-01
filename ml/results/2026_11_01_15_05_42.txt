@@ -1,0 +1,23 @@
+2026/11/01 15:05:42
+
+epochs=10
+lr=0.01
+n_layers=0
+
+correct_predictions=9441
+wrong_predictions=559
+total_predictions=10000
+
+Metrics by class:
+  0: precision=95.19% recall=98.88% f1=97.00%
+  1: precision=94.62% recall=99.21% f1=96.86%
+  2: precision=96.85% recall=92.44% f1=94.60%
+  3: precision=95.31% recall=92.57% f1=93.92%
+  4: precision=94.11% recall=94.30% f1=94.20%
+  5: precision=95.18% recall=90.81% f1=92.94%
+  6: precision=97.53% recall=94.99% f1=96.25%
+  7: precision=95.10% recall=92.41% f1=93.73%
+  8: precision=93.24% recall=93.43% f1=93.33%
+  9: precision=87.81% recall=94.25% f1=90.92%
+
+overall_accuracy=94.41%

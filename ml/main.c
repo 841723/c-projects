@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <string.h>
 
 
 #include "results.h"
@@ -18,62 +19,70 @@ int main() {
         &train_labels,
         &test_labels
     );
+    printf("files loaded successfully\n");
 
     struct timeval inicio, fin;
 
-    #define PROD
+    neural_network *nn = nn_create_neural_network(10, 0.001f, 2000, IMAGE_SIZE*IMAGE_SIZE, 10);
 
-    #ifdef TEST_1
-    for (int i = 0; i < 1; i++) {
-        mnist_display_image(train_images->data + i * IMAGE_SIZE * IMAGE_SIZE);
+    printf("nn created \n");
 
-        for (int j = 0; j < 10; j++) {
-            printf("  %d : %.2f\n", j, train_labels->data[(i * 10 + j)]);
-        }
-        printf("\n");
-    }
-    #endif
-
-
-    #ifdef PROD
-    layer *l = nn_create_layer(10);
-    neural_network *nn = nn_create_neural_network();
-
-    if (nn_add_layer_to_neural_network(nn, l) == FALSE) {
+    if (nn_add_layer_to_neural_network(nn, 128, OF_RELU) == FALSE) {
         perror("Error adding layer to neural network\n");
         return 1;
     }
 
-    gettimeofday(&inicio, NULL);
-    if (nn_train_neural_network(nn, train_images, train_labels) == FALSE) {
-        perror("Error training \n");
+    if (nn_add_layer_to_neural_network(nn, 128, OF_RELU) == FALSE) {
+        perror("Error adding layer to neural network\n");
         return 1;
     }
+
+    if (nn_add_layer_to_neural_network(nn, 10, OF_SOFTMAX) == FALSE) {
+        perror("Error adding layer to neural network\n");
+        return 1;
+    }
+
+    for (int i = 0; i < nn->n_components; i++) {
+        component *cur = nn->components[i];
+        printf("name: %s\n", cur->name);
+    }
+
+    gettimeofday(&inicio, NULL);
+    nn_train_neural_network(nn, train_images, train_labels);
     gettimeofday(&fin, NULL);
 
-
-    matrix *res = nn_train_predict(nn, test_images);
+    matrix *res = mat_create(test_images->rows, nn->output_size);
     if (res == NULL) {
-        perror("Error training \n");
+        fprintf(stderr, "Error allocating prediction results\n");
+        return 1;
+    }
+    if (!nn_predict(nn, test_images, res)) {
+        perror("Error predicting\n");
         return 1;
     }
 
     res_file *rf = rf_create();
 
-    rf_save_model_res(rf, res, test_labels);
-    rf_save_nn(rf, nn);
-
-    rf_log_res(rf);
+    if (rf == NULL ||
+        !rf_save_model_res(rf, res, test_labels) ||
+        !rf_save_nn(rf, nn) ||
+        !rf_save_time(rf, inicio, fin) ||
+        !rf_log_res(rf)
+    ) {
+        fprintf(stderr, "Error saving model statistics\n");
+        rf_free(rf);
+        return 1;
+    }
 
 
     nn_free_neural_network(nn);
 
+    rf_free(rf);
     mat_free(res);
     mat_free(train_images);
     mat_free(test_images);
     mat_free(train_labels);
     mat_free(test_labels);
-    #endif
 
     return 0;
 }
