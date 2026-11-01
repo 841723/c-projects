@@ -1,0 +1,23 @@
+2026/11/01 14:59:50
+
+epochs=1
+lr=0.01
+n_layers=0
+
+correct_predictions=23426
+wrong_predictions=-809286864
+total_predictions=23426
+
+Precision by image matrix:
+  0: precision=0.00%
+  1: precision=0.00%
+  2: precision=0.00%
+  3: precision=0.00%
+  4: precision=0.00%
+  5: precision=0.00%
+  6: precision=0.00%
+  7: precision=0.00%
+  8: precision=0.00%
+  9: precision=0.00%
+
+total_precision=-6551715840.00%

@@ -43,21 +43,25 @@ void mnist_get_data(
     
     *train_labels = mat_create(train_labels_read->rows, 10);
     *test_labels = mat_create(test_labels_read->rows, 10);
-    for (int i = 0; i < (*train_images)->rows; i++) {
-        for (int j = 0; j < 10; j++) {
-            (*train_labels)->data[i * 10 + j] = 0.0f;
+    
+    if (train_images != NULL && test_images != NULL) {
+        for (int i = 0; i < (*train_images)->rows; i++) {
+            for (int j = 0; j < 10; j++) {
+                (*train_labels)->data[i * 10 + j] = 0.0f;
+            }
+            int num = train_labels_read->data[i];
+            if (0 <= num && num <= 9) (*train_labels)->data[i * 10 + num] = 1.0f;
         }
-        int num = train_labels_read->data[i];
-        if (0 <= num && num <= 9) (*train_labels)->data[i * 10 + num] = 1.0f;
+    
+        for (int i = 0; i < (*test_images)->rows; i++) {
+            for (int j = 0; j < 10; j++) {
+                (*test_labels)->data[i * 10 + j] = 0.0f;
+            }
+            int num = test_labels_read->data[i];
+            if (0 <= num && num <= 9) (*test_labels)->data[i * 10 + num] = 1.0f;
+        }
     }
 
-    for (int i = 0; i < (*test_images)->rows; i++) {
-        for (int j = 0; j < 10; j++) {
-            (*test_labels)->data[i * 10 + j] = 0.0f;
-        }
-        int num = test_labels_read->data[i];
-        if (0 <= num && num <= 9) (*test_labels)->data[i * 10 + num] = 1.0f;
-    }
 
     mat_free(train_labels_read);
     mat_free(test_labels_read);

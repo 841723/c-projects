@@ -95,7 +95,6 @@ neural_network *nn_create_neural_network(int epochs, float lr, int batch_size, i
 int nn_add_layer_to_neural_network(neural_network *nn, int n_cells, OUTPUT_FUNCTION of);
 
 int nn_train_neural_network(neural_network *nn, matrix *train_data, matrix *train_labels);
-matrix *nn_train_predict(neural_network *nn, matrix *test_data);
 
 int nn_predict(neural_network *nn, matrix *data, matrix *res);
 
