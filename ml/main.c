@@ -23,7 +23,7 @@ int main() {
 
     struct timeval inicio, fin;
 
-    neural_network *nn = nn_create_neural_network(10, 0.001f, 2000, IMAGE_SIZE*IMAGE_SIZE, 10);
+    neural_network *nn = nn_create_neural_network(200, 0.0001f, 2000, IMAGE_SIZE*IMAGE_SIZE, 10);
 
     printf("nn created \n");
 
